@@ -7,7 +7,6 @@ import config
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-import db
 import aioschedule
 import function
 from aiogram.types import FSInputFile
@@ -74,19 +73,7 @@ async def command_start_handler(message: Message) -> None:
 
 @dp.message()
 async def message_hendler(message: Message) -> None:
-    if str(message.message_thread_id) == "21496":
-        if  message.text == "Бот?" and str(message.from_user.id) == config.Lada_chat_id:
-            await message.reply("Работаю. Принимаю сообщения только тут") 
-        else:
-            if message.text != None or message.caption != None:
-                if message.text != None and len(message.text) > 100:
-                    db.create_record(message.message_id, message.text, message.from_user.username, message.date+ timedelta(hours=3))
-                elif message.caption != None and len(message.caption) > 100:
-                    db.create_record(message.message_id, message.caption, message.from_user.username, message.date+ timedelta(hours=3))
-    elif str(message.message_thread_id) == "25532":
-        if  message.text == "Бот?" and str(message.from_user.id) == config.Lada_chat_id:
-            await message.reply("мы в топике Итоги")
-            print(message.chat.id) 
+   pass
 
 @dp.callback_query(MyCallback.filter(F.Action == "test"))
 async def my_callback_last_mounth(query: CallbackQuery):

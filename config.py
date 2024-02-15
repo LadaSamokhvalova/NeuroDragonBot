@@ -10,3 +10,6 @@ API_ID = '27544080'
 API_HASH = '4f20b2040ad40e92abe88cb3193005bd'
 
 redac_caht_id = "-1001849227942"
+
+topic_id_itogi = "25532"
+topic_id_gotnews = "21496"
