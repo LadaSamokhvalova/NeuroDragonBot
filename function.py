@@ -3,10 +3,9 @@ import csv
 import re
 import string
 from difflib import SequenceMatcher
-import db
 import pandas as pd
 import config
-from telethon.sync import TelegramClient, errors
+from telethon.sync import errors
 from telethon import TelegramClient
 import logging
 import table
@@ -23,37 +22,53 @@ def preprocess_text(text):
 
 async def get_day_posts(date_start, date_end):
     async with TelegramClient("my_session", config.API_ID, config.API_HASH, system_version='4.16.30-vxCUSTOM') as client:
+        my_chats = []
+        authors_dict = {}
+        data_redact_list = []
         channel_name = "https://t.me/dragology"
         msg_date = None
         data_list = []
         today = datetime.now().date()
         yesterday = today - timedelta(days = 1)
-        print("we are in def")
-        if date_start == '0' and date_end == '0':
+
+        if date_start == '0' and date_end == '0': # для ежедневных вызовов
+            
             period_start = yesterday 
             period_end = yesterday
-            print("we find dates")
-            print(period_start)
-        elif date_start == '1' and date_end == '1':
-            period_start = yesterday 
-            period_end = yesterday
-            print("we find dates")
-            print(period_start)
-        else:
+
+            async for chat in client.iter_dialogs():
+                chat_name = chat.name
+                my_chats.append(chat_name)
+
+            users = await client.get_participants(my_chats[0])  
+            for user in users:
+                user_id = user.id
+                user_username = user.username
+                authors_dict[user_id] = user_username
+
+            message_period_end = today
+            message_period_start = today - timedelta(days = 3)
+            async for message in client.iter_messages(my_chats[0]):
+                message_date = message.date.date() + timedelta(hours=3)
+                m_text = message.message
+                if len(m_text) > 50:
+                    if message_period_start <= message_date <=message_period_end:
+                        message_id = message.id
+                        msg_date = message.date + timedelta(hours=3)
+                        text = message.message
+                        message_author_id = message.from_id.user_id
+                        message_author = authors_dict[message_author_id]
+                        data_redact_list.append([message_id, msg_date, text, message_author])
+                    elif message_period_start > message_date:
+                        break
+
+        else:   # для ручного ввода или прошлого месяца
             if isinstance(date_start, str):
                 period_start = datetime.strptime(date_start, "%Y-%m-%d").date()
                 period_end = datetime.strptime(date_end, "%Y-%m-%d").date()
-                print(period_start)
-                print(period_end)
-                #period_start = yesterday 
-                #period_end = yesterday
             else:
                 period_start = date_start
                 period_end = date_end
-                print(period_start)
-                print(period_end)
-                #period_start = yesterday 
-                #period_end = yesterday
 
         async for message in client.iter_messages(channel_name):
             message_date = message.date.date() + timedelta(hours=3)
@@ -92,72 +107,24 @@ async def get_day_posts(date_start, date_end):
                 elif period_start > message_date:
                     break   
 
-        # my_chats = []
-
-        # # с помощью функции client.iter_dialogs() можно итерироваться по диалогам
-        # async for chat in client.iter_dialogs():
-        #     # имя чата можно получить вот так:
-        #     chat_name = chat.name
-        #     my_chats.append(chat_name)
-
-        # data_redact = []
-        # chat_name = my_chats[0]
-        # print(chat_name)
-        # current_date = datetime.now()
-        # not_current_date = current_date - timedelta(days=3)
-        # async for message in client.iter_messages(chat_name):
-        #     if message == "21496" and len(message) > 100:
-        #         message_date = message.date.date() + timedelta(hours=3)
-        #         m_text = message.message
-        #         if m_text:
-        #             if not_current_date <= message_date <=current_date:
-        #                 message_id = message.id
-        #                 msg_date = message.date + timedelta(hours=3)
-        #                 print(msg_date)
-        #                 text = message.message
-        #                 header = text[:text.find("\n")]
-        #                 text = text.replace(header + "\n\n", "")
-        #                 text = text.replace("\n", " ")
-        #                 author = message.author_username
-                       
-        #                 data_redact.append([message_id, msg_date, header, text, author])
-        #             elif not_current_date > message_date:
-        #                 break 
-
-
-        
-    # csv_file_path_2 = 'result_2.csv'
-    # csv_header = ["ID","Message Date", "Header", "Text", "Author"]
-    # with open(csv_file_path_2, 'w', newline='', encoding='utf-8') as csv_file:
-    #     csv_writer = csv.writer(csv_file, delimiter=';')
-    #     csv_writer.writerow(csv_header)
-    #     for row in data_list:
-    #         csv_writer.writerow(row)
-
-    csv_file_path = 'result.csv'
+    csv_file_path_chat_messages = 'chat_messages.csv'
+    csv_header = ["ID","Message Date", "Text", "Author"]
+    with open(csv_file_path_chat_messages, 'w', newline='', encoding='utf-8') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=';')
+        csv_writer.writerow(csv_header)
+        for row in data_redact_list:
+            csv_writer.writerow(row)
+                
+    name_string = yesterday.strftime('%Y_%m_%d')
+    csv_file_path_day_posts= f'day_posts_{name_string}.csv'
     csv_header = ["ID","Message Date", "Header", "Text", "Views","Total Forwards", "Total Reactions", "Total Comments"]
-    with open(csv_file_path, 'w', newline='', encoding='utf-8') as csv_file:
+    with open(csv_file_path_day_posts, 'w', newline='', encoding='utf-8') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';')
         csv_writer.writerow(csv_header)
         for row in data_list:
             csv_writer.writerow(row)
     
-
-    return csv_file_path
-
-def get_records_data():
-    records = db.get_records_by_yesterday()
-    data_list = []
-    if records:
-        for record in records:
-            record_dict = {
-                'post_message_id': record.post_message_id,
-                'post_text': record.post_text,
-                'author_username': record.author_username,
-                'post_date': record.post_date.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            data_list.append(record_dict)
-    return data_list
+    return csv_file_path_day_posts, csv_file_path_chat_messages
 
 def similarity(text1, text2):
     matcher = SequenceMatcher(None, text1, text2)
@@ -167,42 +134,37 @@ def similarity(text1, text2):
 
 def compare_dicts(dict1, dict2):
     result_dict = []
-    i = 0
-    print("все записиси из второго словаря:")
-    print(dict2)
     for record1 in dict1:
         text1 = record1.get('Header', '')  +" "+ record1.get('Text', '') 
         text1 = preprocess_text(text1)
-        print(f"{i}. \n {text1}")
-        i = i+1
         for record2 in dict2:
-            text2 = record2.get('post_text', '')
+            text2 = record2.get('Text', '')
             text2 = preprocess_text(text2)
 
-            # Вычисляем коэффициент схожести
             similarity_coefficient = similarity(text1, text2)
-            if similarity_coefficient > 0.5:
+            if similarity_coefficient > 0.7:
                 result_entry = {
-                    'author_username': record2['author_username'],
+                    'author_username': record2['Author'],
                     'Header': record1['Header'],
                     'Post_link': record1["ID"],
                     'Total_Forwards': record1['Total Forwards'],
                     'Similarity_Coefficient': similarity_coefficient
                 }
                 result_dict.append(result_entry)
-                print(result_entry)
-                print()
                 break
     return result_dict
 
 
-def create_day_stat(file_name):
-    df = pd.read_csv(file_name, delimiter=';')
-    df_sorted = df.sort_values(by='Total Forwards', ascending=False)
-    result_dict = df_sorted.to_dict(orient='records')
+def create_day_stat(day_posts, chat_messages):
+    df_post = pd.read_csv(day_posts, delimiter=';')
+    df_sorted = df_post.sort_values(by='Total Forwards', ascending=False)
+    result_posts_dict = df_sorted.to_dict(orient='records')
 
-    db_data = get_records_data()
-    result = compare_dicts(result_dict, db_data)
+    df_messages = pd.read_csv(chat_messages, delimiter=';')
+    result_messages_dict = df_messages.to_dict(orient='records')
+
+    result = compare_dicts(result_posts_dict, result_messages_dict)
+
     sorted_results = sorted(result, key=lambda x: x['Total_Forwards'], reverse=True)
     top_five_results = sorted_results[:5]
 
@@ -213,10 +175,12 @@ def create_day_stat(file_name):
     text = f"<b>Итоги {formatted_date}</b>\n\n"
     
     for item in top_five_results:
+        item["Header"] = item["Header"].replace("ё", "e")
+        header = re.sub('[^\x00-\x7Fа-яА-Я]', '', item["Header"])
         if item['Total_Forwards'] >= 100:
-            text += f"🔥 <a href = \"https://t.me/dragology/{item['Post_link']}\"> {item['Header']}</a> от @{item['author_username']} ({item['Total_Forwards']})\n\n" 
+            text += f"🔥 <a href = \"https://t.me/dragology/{item['Post_link']}\"> {header}</a> от @{item['author_username']} ({item['Total_Forwards']})\n\n" 
         else:
-            text += f"{i}) <a href = \"https://t.me/dragology/{item['Post_link']}\"> {item['Header']}</a> от @{item['author_username']} ({item['Total_Forwards']})\n\n" 
+            text += f"{i}) <a href = \"https://t.me/dragology/{item['Post_link']}\"> {header}</a> от @{item['author_username']} ({item['Total_Forwards']})\n\n" 
         i=i+1
     work_with_table(sorted_results)
     return text
@@ -234,7 +198,7 @@ def work_with_table(sorted_results):
     yesterday = current_date - timedelta(days=1)
     formatted_date_day = yesterday.strftime("%d.%m")
     formatted_date_mounth = yesterday.strftime("%m.%Y")
-    #table.Write_to_table_all(author_post_count, formatted_date_mounth, formatted_date_day)
+    table.Write_to_table_all(author_post_count, formatted_date_mounth, formatted_date_day)
 
 
 def mounth_sum(file_name):
