@@ -34,7 +34,6 @@ async def get_day_result(bot: TelegramClient) -> None:
                                 caption="Файл за вчера")
 
         result = function.create_day_stat(day_posts, day_messages)
-        print(result)
         await bot.send_message(chat_id=config.redac_chat_id, 
                                message_thread_id = config.topic_id_itogi, 
                                text=result, 
