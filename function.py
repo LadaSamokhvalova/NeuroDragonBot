@@ -51,16 +51,17 @@ async def get_day_posts(date_start, date_end):
             async for message in client.iter_messages(my_chats[0]):
                 message_date = message.date.date() + timedelta(hours=3)
                 m_text = message.message
-                if len(m_text) > 50:
-                    if message_period_start <= message_date <=message_period_end:
-                        message_id = message.id
-                        msg_date = message.date + timedelta(hours=3)
-                        text = message.message
-                        message_author_id = message.from_id.user_id
-                        message_author = authors_dict[message_author_id]
-                        data_redact_list.append([message_id, msg_date, text, message_author])
-                    elif message_period_start > message_date:
-                        break
+                if m_text:
+                    if len(m_text) > 50:
+                        if message_period_start <= message_date <=message_period_end:
+                            message_id = message.id
+                            msg_date = message.date + timedelta(hours=3)
+                            text = message.message
+                            message_author_id = message.from_id.user_id
+                            message_author = authors_dict[message_author_id]
+                            data_redact_list.append([message_id, msg_date, text, message_author])
+                        elif message_period_start > message_date:
+                            break
 
         else:   # для ручного ввода или прошлого месяца
             if isinstance(date_start, str):
