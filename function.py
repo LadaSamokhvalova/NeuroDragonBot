@@ -47,21 +47,20 @@ async def get_day_posts(date_start, date_end):
                 authors_dict[user_id] = user_username
 
             message_period_end = today
-            message_period_start = today - timedelta(days = 3)
+            message_period_start = today - timedelta(days = 4)
             async for message in client.iter_messages(my_chats[0]):
                 message_date = message.date.date() + timedelta(hours=3)
                 m_text = message.message
-                if m_text:
-                    if len(m_text) > 50:
-                        if message_period_start <= message_date <=message_period_end:
-                            message_id = message.id
-                            msg_date = message.date + timedelta(hours=3)
-                            text = message.message
-                            message_author_id = message.from_id.user_id
-                            message_author = authors_dict[message_author_id]
-                            data_redact_list.append([message_id, msg_date, text, message_author])
-                        elif message_period_start > message_date:
-                            break
+                if m_text and len(m_text) > 100:
+                    if message_period_start <= message_date <=message_period_end:
+                        message_id = message.id
+                        msg_date = message.date + timedelta(hours=3)
+                        text = message.message
+                        message_author_id = message.from_id.user_id
+                        message_author = authors_dict[message_author_id]
+                        data_redact_list.append([message_id, msg_date, text, message_author])
+                    elif message_period_start > message_date:
+                        break
 
         else:   # для ручного ввода или прошлого месяца
             if isinstance(date_start, str):
@@ -117,7 +116,7 @@ async def get_day_posts(date_start, date_end):
             csv_writer.writerow(row)
                 
     name_string = yesterday.strftime('%Y_%m_%d')
-    csv_file_path_day_posts= f'day_posts_{name_string}.csv'
+    csv_file_path_day_posts= f'day_report/day_posts_{name_string}.csv'
     csv_header = ["ID","Message Date", "Header", "Text", "Views","Total Forwards", "Total Reactions", "Total Comments"]
     with open(csv_file_path_day_posts, 'w', newline='', encoding='utf-8') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';')
@@ -143,7 +142,7 @@ def compare_dicts(dict1, dict2):
             text2 = preprocess_text(text2)
 
             similarity_coefficient = similarity(text1, text2)
-            if similarity_coefficient > 0.7:
+            if similarity_coefficient > 0.8:
                 result_entry = {
                     'author_username': record2['Author'],
                     'Header': record1['Header'],
@@ -162,6 +161,7 @@ def create_day_stat(day_posts, chat_messages):
     result_posts_dict = df_sorted.to_dict(orient='records')
 
     df_messages = pd.read_csv(chat_messages, delimiter=';')
+    df_messages = df_messages.iloc[::-1]
     result_messages_dict = df_messages.to_dict(orient='records')
 
     result = compare_dicts(result_posts_dict, result_messages_dict)
