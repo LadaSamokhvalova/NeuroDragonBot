@@ -16,23 +16,15 @@ def Write_to_table_all(data, date_mounth, date_day):
     worksheet = sh.worksheet(date_mounth)
     column_index = worksheet.find(date_day).col
 
-    author_mapping = {
-         'FNAFGOD':'Лера (FNAFGOD)',
-         'romanserevreymac':'Роман (romanserevreymac)',
-         'KriJolt':'Егор (KriJolt)',
-         'Paradirererere':'Даер (Paradirererere)',
-         'travis_bickle_76':'Артем (travis_bickle_76)',
-         'egzoll':'Егор (egzoll)',
-         'plachacwa':'Placheta? R. M.? (plachacwa)',
-         'dragondocx': 'Влад (dragondocx)'
-    }
-    start_col = column_index 
+    author_list = worksheet.col_values(1)
+    day_col = column_index 
 
     # Вставляем данные в таблицу
     for google_sheets_author, post_count in data.items():
-            author = author_mapping[google_sheets_author]
-            cell = worksheet.find(author)
-            row_index = cell.row
-            worksheet.update_cell(row_index, start_col, post_count)
+            for index, element in enumerate(author_list):
+               if google_sheets_author in element:
+                    row_index = index+1
+                    worksheet.update_cell(row_index, day_col, post_count)
+                    break
 
    

@@ -33,7 +33,8 @@ async def get_day_result(bot: TelegramClient) -> None:
                                 document=file, 
                                 caption="Файл за вчера")
 
-        result = function.create_day_stat(day_posts, day_messages)
+        result, sorted_results = function.create_day_stat(day_posts, day_messages)
+        function.work_with_table(sorted_results)
         await bot.send_message(chat_id=config.redac_chat_id, 
                                message_thread_id = config.topic_id_itogi, 
                                text=result, 
@@ -85,7 +86,8 @@ async def my_callback_last_mounth(query: CallbackQuery):
     day_posts, day_messages = await function.get_day_posts('0', '0')
     file = FSInputFile(day_posts)
     await bot.send_document(chat_id = config.Lada_chat_id, document=file, caption="Вот он файл за день прошедший")
-    result = function.create_day_stat(day_posts, day_messages)
+    result, sorted_results = function.create_day_stat(day_posts, day_messages)
+    function.work_with_table(sorted_results)
     await bot.send_message(chat_id=config.Lada_chat_id, text=result, disable_web_page_preview = True)
     
 

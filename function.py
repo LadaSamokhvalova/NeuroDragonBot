@@ -183,8 +183,8 @@ def create_day_stat(day_posts, chat_messages):
         else:
             text += f"{i}) <a href = \"https://t.me/dragology/{item['Post_link']}\"> {header}</a> от @{item['author_username']} ({item['Total_Forwards']})\n\n" 
         i=i+1
-    work_with_table(sorted_results)
-    return text
+
+    return text, sorted_results
 
 def work_with_table(sorted_results):
     author_post_count = {}
