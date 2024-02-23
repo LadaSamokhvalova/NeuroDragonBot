@@ -39,19 +39,19 @@ async def get_day_posts(date_start, date_end):
             async for chat in client.iter_dialogs():
                 chat_name = chat.name
                 my_chats.append(chat_name)
-
+            
             users = await client.get_participants(my_chats[0])  
             for user in users:
                 user_id = user.id
                 user_username = user.username
                 authors_dict[user_id] = user_username
-
+            
             message_period_end = today
             message_period_start = today - timedelta(days = 4)
             async for message in client.iter_messages(my_chats[0]):
                 message_date = message.date.date() + timedelta(hours=3)
                 m_text = message.message
-                if m_text and len(m_text) > 100:
+                if m_text and len(m_text) > 120:
                     if message_period_start <= message_date <=message_period_end:
                         message_id = message.id
                         msg_date = message.date + timedelta(hours=3)
@@ -137,12 +137,14 @@ def compare_dicts(dict1, dict2):
     for record1 in dict1:
         text1 = record1.get('Header', '')  +" "+ record1.get('Text', '') 
         text1 = preprocess_text(text1)
+        #print("Запись из файла:")
+        #print(text1)
         for record2 in dict2:
             text2 = record2.get('Text', '')
             text2 = preprocess_text(text2)
 
             similarity_coefficient = similarity(text1, text2)
-            if similarity_coefficient > 0.8:
+            if similarity_coefficient > 0.6:
                 result_entry = {
                     'author_username': record2['Author'],
                     'Header': record1['Header'],
@@ -151,6 +153,9 @@ def compare_dicts(dict1, dict2):
                     'Similarity_Coefficient': similarity_coefficient
                 }
                 result_dict.append(result_entry)
+                #print("Соответствует:")
+                #print(result_entry)
+                #print()
                 break
     return result_dict
 
