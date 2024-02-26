@@ -137,14 +137,14 @@ def compare_dicts(dict1, dict2):
     for record1 in dict1:
         text1 = record1.get('Header', '')  +" "+ record1.get('Text', '') 
         text1 = preprocess_text(text1)
-        #print("Запись из файла:")
-        #print(text1)
+        # print("Запись из файла:")
+        # print(text1)
         for record2 in dict2:
             text2 = record2.get('Text', '')
             text2 = preprocess_text(text2)
 
-            similarity_coefficient = similarity(text1, text2)
-            if similarity_coefficient > 0.6:
+            similarity_coefficient = similarity(text2, text1)
+            if similarity_coefficient > 0.7:
                 result_entry = {
                     'author_username': record2['Author'],
                     'Header': record1['Header'],
@@ -153,9 +153,9 @@ def compare_dicts(dict1, dict2):
                     'Similarity_Coefficient': similarity_coefficient
                 }
                 result_dict.append(result_entry)
-                #print("Соответствует:")
-                #print(result_entry)
-                #print()
+                # print("Соответствует:")
+                # print(result_entry)
+                # print()
                 break
     return result_dict
 
