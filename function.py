@@ -53,12 +53,15 @@ async def get_day_posts(date_start, date_end):
                 m_text = message.message
                 if m_text and len(m_text) > 120:
                     if message_period_start <= message_date <=message_period_end:
-                        message_id = message.id
-                        msg_date = message.date + timedelta(hours=3)
-                        text = message.message
                         message_author_id = message.from_id.user_id
-                        message_author = authors_dict[message_author_id]
-                        data_redact_list.append([message_id, msg_date, text, message_author])
+                        if message_author_id in authors_dict:
+                            message_author = authors_dict[message_author_id]
+                            message_id = message.id
+                            msg_date = message.date + timedelta(hours=3)
+                            text = message.message
+                            data_redact_list.append([message_id, msg_date, text, message_author])
+                        else:
+                            pass
                     elif message_period_start > message_date:
                         break
 
